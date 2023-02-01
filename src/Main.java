@@ -10,6 +10,8 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import barcode.DigitCodes;
+
 public class Main {
 
 	/**
@@ -96,59 +98,50 @@ public class Main {
 		// Schwarze Balken und Weisse Balken jeweils 4 unterschiedliche Breiten.
 		// Dünner Schwarzer Balken=1 // Dünner weisser Balken=0
 		//
-		graphics.setColor(new Color(0,255, 0));// Zum markieren der Mitte, des Anfangs und des Endes des Codes...
-		
-		int c[];			// Rohe Bilddaten binary.
-		c=new int[width];
-		
-		int barcode[];
-		barcode=new int[width]; // Bildaten konvertiert in den barcode, binary
-		
+		graphics.setColor(new Color(0, 255, 0));// Zum markieren der Mitte, des Anfangs und des Endes des Codes...
+
+		int c[]; // Rohe Bilddaten binary.
+		c = new int[width];
+		int y = 150;
+
 		//
 		// Eine Zeile des barcodes lesen
 		//
-		int y = 185; 
 		for (int x = 0; x < width; x = x + 1) {
-			graphics.drawLine(0, y+2, width, y+2);
-			int p=outputImage.getRGB(x, y);
-			if (p==0) {
-				c[x]=0;
-			}else {
-				c[x]=1;
+			graphics.drawLine(0, y + 2, width, y + 2);
+			int p = outputImage.getRGB(x, y);
+			if (p == 0) {
+				c[x] = 0;
+			} else {
+				c[x] = 1;
 			}
 		}
-		
-		for (int i=0;i<width;i++)
-			System.out.print(c[i]);
-		System.out.println();
-		
+
 		//
 		// Beginn des Barcodes in der Zeile suchen.
 		//
 		// Wir wissen, der Beginn wird durch 101 markiert.
 		//
-		int xStart=0,xEnd=0;
-		
-		while (c[xStart]!=1)
+		int xStart = 0, xEnd = 0;
+
+		while (c[xStart] != 1)
 			xStart++;
-		
+
 		graphics.drawLine(xStart, 0, xStart, height);
-		
+
 		//
 		// Die Breite des ersten Balkens bestimmt die Midestbreite für eine 0
 		// oder eine 1. Diese Ziffern werden "Module" genannt.
 		//
-		xEnd=xStart;
-		while(c[xEnd]!=0)
+		xEnd = xStart;
+		while (c[xEnd] != 0)
 			xEnd++;
-	
-		int minBarWidth=xEnd-xStart;
-		int moduleWidth=minBarWidth*7;
-		
-		System.out.println(minBarWidth);
-		
+
+		int minBarWidth = xEnd - xStart;
+		int moduleWidth = minBarWidth * 7;
+
 		//
-		// Nun bestimmen wir das Ende der aktuellen Zeile des Barcodes in der Bilddatei. 
+		// Nun bestimmen wir das Ende der aktuellen Zeile des Barcodes in der Bilddatei.
 		//
 		// Ein ISBN 13 Barcode besteht aus 95 Modulen. Er:
 		//
@@ -156,94 +149,92 @@ public class Main {
 		// - Hat in der Mitte die markierung 01010 = 5 Module
 		// - Ended mit 101 = 3 Module.
 		//
-		// Dieses "Framework" lässt nun platz für 84 Module. 42 in der linken/ 42 in der rechten 
+		// Dieses "Framework" lässt nun Platz für 84 Module. 42 in der linken/ 42 in der
+		// rechten
 		// Hälfte...
 		//
 		// Wir markieren nun zunächst einmal die restlichen Bereiche des Barcodes...
-		// 
-		xEnd=xStart+minBarWidth*95;
+		//
+		xEnd = xStart + minBarWidth * 95;
 		graphics.drawLine(xEnd, 0, xEnd, height);
-	
-		
-		int startOfFirstHalf=xStart+3*minBarWidth;
+
+		int startOfFirstHalf = xStart + 3 * minBarWidth;
 		graphics.drawLine(startOfFirstHalf, 0, startOfFirstHalf, height);
-		int endOfFirstHalf=startOfFirstHalf+42*minBarWidth;
+		int endOfFirstHalf = startOfFirstHalf + 42 * minBarWidth;
 		graphics.drawLine(endOfFirstHalf, 0, endOfFirstHalf, height);
-		int startOfSecondHalf=endOfFirstHalf+5*minBarWidth;
+		int startOfSecondHalf = endOfFirstHalf + 5 * minBarWidth;
 		graphics.drawLine(startOfSecondHalf, 0, startOfSecondHalf, height);
-		int endOfSecondHalf=startOfSecondHalf+42*minBarWidth;
+		int endOfSecondHalf = startOfSecondHalf + 42 * minBarWidth;
 		graphics.drawLine(endOfSecondHalf, 0, endOfSecondHalf, height);
-		
-		graphics.setColor(new Color(0,255,255));
-		
-		for (int x=startOfFirstHalf+moduleWidth;x<endOfFirstHalf;x=x+moduleWidth)
+
+		graphics.setColor(new Color(0, 255, 255));
+
+		for (int x = startOfFirstHalf + moduleWidth; x < endOfFirstHalf; x = x + moduleWidth)
 			graphics.drawLine(x, 0, x, height);
-		
-		for (int x=startOfSecondHalf+moduleWidth;x<endOfSecondHalf;x=x+moduleWidth)
+
+		for (int x = startOfSecondHalf + moduleWidth; x < endOfSecondHalf; x = x + moduleWidth)
 			graphics.drawLine(x, 0, x, height);
-		
+
 		//
 		// Ergebnis speichern.
 		//
 		File outputfile = new File("saved.png");
 		ImageIO.write(outputImage, "png", outputfile);
 
-		
 		//
 		// Jede Ziffer wird mit 7 Modulen codiert...
 		// Aus den Rohdaten werden diese Module nun extraiert.
 		//
-	
-		System.out.print(c[xStart]);
-		xStart=xStart+minBarWidth;
-		System.out.print(c[xStart]);
-		xStart=xStart+minBarWidth;
-		System.out.println(c[xStart]);
-		xStart=xStart+minBarWidth;
-		
-		StringBuilder module=new StringBuilder();
-		int mod=7;
-		for (int i=startOfSecondHalf;i<=endOfSecondHalf;i=i+minBarWidth) {
+		StringBuilder module = new StringBuilder();
+		int mod = 7;
+		int digit=0;
+
+		// Erste Hälfte des Barcodes
+
+		int digitNr = 0;
+		for (int i = startOfFirstHalf+1; i < endOfFirstHalf; i = i + minBarWidth) {
 			System.out.print(c[i]);
 			module.append(c[i]);
 			mod--;
-			if (mod==0) {
-				mod=7;
-				int digit=getDigitSecondH(module.toString());
-				System.out.println("    "+digit);
+			if (mod == 0) {
+				mod = 7;
+				if (digitNr == 0)
+					digit = DigitCodes.getDigitFirstH("A", module.toString());
+				if (digitNr == 1)
+					digit = DigitCodes.getDigitFirstH("B", module.toString());
+				if (digitNr == 2)
+					digit = DigitCodes.getDigitFirstH("B", module.toString());
+				if (digitNr == 3)
+					digit = DigitCodes.getDigitFirstH("A", module.toString());
+				if (digitNr == 4)
+					digit = DigitCodes.getDigitFirstH("B", module.toString());
+				if (digitNr == 5)
+					digit = DigitCodes.getDigitFirstH("A", module.toString());
+
+				digitNr++;
+				System.out.println("    " + digit);
 				module.setLength(0);
 			}
-			
 		}
-		
-		
+
+		module.setLength(0);
+		mod = 7;
+
+		// Zweite Hälfte des Barcodes
+		for (int i = startOfSecondHalf; i < endOfSecondHalf; i = i + minBarWidth) {
+			System.out.print(c[i]);
+			module.append(c[i]);
+			mod--;
+			if (mod == 0) {
+				mod = 7;
+				digit = DigitCodes.getDigitSecondH(module.toString());
+				System.out.println("    " + digit);
+				module.setLength(0);
+			}
+		}
 	}
+
 	
-	/**
-	 * Binär modul der zweiten Hälfte des Barcodes 
-	 * in einen integer decodieren. Wenn ein unbekanntes
-	 * Muster übergeben wird, dann wird die 666 zurückgegeben.
-	 * 
-	 * @param d
-	 * @return
-	 */
-	private static int getDigitSecondH(String d) {
-		
-		final int INVALID=666;
-		
-		if (d.equals("1110010")) return 0;
-		if (d.equals("1100110")) return 1;
-		if (d.equals("1101100")) return 2;
-		if (d.equals("1000010")) return 3;
-		if (d.equals("1011100")) return 4;
-		if (d.equals("1001110")) return 5;
-		if (d.equals("1010000")) return 6;
-		if (d.equals("1000100")) return 7;
-		if (d.equals("1001000")) return 8;
-		if (d.equals("1110100")) return 9;
-		
-		return INVALID;
-	}
 
 	/**
 	 * prints the contents of buff2 on buff1 with the given opaque value.
