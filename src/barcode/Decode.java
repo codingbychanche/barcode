@@ -11,6 +11,8 @@ import javax.imageio.ImageIO;
 public class Decode {
 
 	public static String ean(String fileName, String outputFile, int barcodeVerticalpos) throws IOException {
+		
+		long startTime = System.currentTimeMillis();    
 
 		StringBuilder protocol = new StringBuilder();
 
@@ -22,7 +24,7 @@ public class Decode {
 		int width = inputImage.getWidth();
 		int height = inputImage.getHeight();
 
-		protocol.append("Image read. Height=" + height + " Width=" + width + "\n");
+		protocol.append("Image read. Height=" + height + " Width=" + width + " ["+(System.currentTimeMillis()-startTime)+"ms]\n");
 
 		float normSum = 0;
 
@@ -46,7 +48,7 @@ public class Decode {
 		// über alle Bildpunkte.....
 		//
 		float avgNormSum = normSum / (width * height);
-		protocol.append("Image was analyzed. Avarage luminance=" + avgNormSum + "\n");
+		protocol.append("Image was analyzed. Avarage luminance=" + avgNormSum +" ["+(System.currentTimeMillis()-startTime)+"ms]\n");
 		protocol.append("Creating optimized image for decoding\n");
 
 		//
@@ -72,7 +74,7 @@ public class Decode {
 				}
 			}
 		}
-		protocol.append("Optimized image created\n");
+		protocol.append("Optimized image created"+ " ["+(System.currentTimeMillis()-startTime)+"ms]\n");
 
 		//
 		// ISBN 13 => 13 Ziffern
@@ -117,7 +119,7 @@ public class Decode {
 
 		graphics.drawLine(xStart, 0, xStart, height);
 
-		protocol.append("Horizontal start found at x=" + xStart + "\n");
+		protocol.append("Horizontal start found at x=" + xStart + " ["+(System.currentTimeMillis()-startTime)+"ms]\n");
 
 		//
 		// Die Breite des ersten Balkens bestimmt die Midestbreite für eine 0
@@ -132,7 +134,7 @@ public class Decode {
 		int minBarWidth = xEnd - xStart;
 		int moduleWidth = minBarWidth * 7;
 
-		protocol.append("Min- bar width for one digit=" + minBarWidth + " Module width=" + moduleWidth + "\n");
+		protocol.append("Min- bar width for one digit=" + minBarWidth + " Module width=" + moduleWidth + " ["+(System.currentTimeMillis()-startTime)+"ms]\n");
 
 		//
 		// Nun bestimmen wir das Ende der aktuellen Zeile des Barcodes in der Bilddatei.
@@ -175,7 +177,7 @@ public class Decode {
 		File outputfile = new File(outputFile);
 		ImageIO.write(imageToDecode, "png", outputfile);
 
-		protocol.append("Output image written:" + outputFile + "\n");
+		protocol.append("Output image written:" + outputFile + " ["+(System.currentTimeMillis()-startTime)+"ms]\n");
 
 		//
 		// Jede Ziffer wird mit 7 Modulen codiert...
@@ -232,7 +234,7 @@ public class Decode {
 			}
 		}
 
-		protocol.append("Decoding ended.\n");
+		protocol.append("Decoding ended."+ " ["+(System.currentTimeMillis()-startTime)+"ms]\n");
 
 		System.out.println(protocol.toString());
 
