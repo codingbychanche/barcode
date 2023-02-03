@@ -1,7 +1,9 @@
 package barcode;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Stroke;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -10,7 +12,24 @@ import javax.imageio.ImageIO;
 
 public class Decode {
 
+	//
+	// Consatnts reffering to an EAN/ ISBN 13 Code
+	//
 	private static final int ONE_MODULE_EQUALS_7_BARS = 7;
+	private static final int NUM_OF_MODULES_OF_EAN = 95;
+	private static final int NUM_OF_DATA_MODULES = 42;
+	private static final int NUM_OF_START_END_BARS = 3;
+	private static final int NUM_OF_CENTER_BARS = 5;
+
+	/**
+	 * This decodes an EAN/ ISBN_ 13 Barcode...
+	 * 
+	 * @param fileName
+	 * @param outputFile
+	 * @param barcodeVerticalpos
+	 * @return
+	 * @throws IOException
+	 */
 
 	public static String ean(String fileName, String outputFile, int barcodeVerticalpos) throws IOException {
 
@@ -38,10 +57,8 @@ public class Decode {
 		//
 		for (int y = 1; y < height; y++) {
 			for (int x = 1; x < width; x++) {
-
 				int clr = inputImage.getRGB(x, y);
 				float norm = getAvgCol(x, y, clr);
-
 				normSum = normSum + norm;
 			}
 		}
@@ -94,8 +111,7 @@ public class Decode {
 		//
 		protocol.append("Reading barcode. y=" + barcodeVerticalpos + "\n");
 
-		int rawBarcodeData[]; // Rohe Bilddaten binary.
-		rawBarcodeData = new int[width];
+		int rawBarcodeData[] = new int[width + 5]; // Rohe Bilddaten binary
 
 		//
 		// Eine Zeile des barcodes lesen
@@ -116,32 +132,24 @@ public class Decode {
 		int xStart = 0, xEnd = 0;
 		boolean noValidStartFound = true;
 
-		protocol.append("Searching for horizontal start of barcode"+ " ["
-				+ (System.currentTimeMillis() - startTime) + "ms]\n");
+		protocol.append("Searching for horizontal start of barcode" + " [" + (System.currentTimeMillis() - startTime)
+				+ "ms]\n");
 
-		while (noValidStartFound && xStart <= width) {
+		// while (noValidStartFound && xStart <= width) {
 
-			while (rawBarcodeData[xStart] != 1)
-				xStart++;
+		while (rawBarcodeData[xStart] != 1)
+			xStart++;
 
-			//
-			// Check for '101'
-			//
-			int n = xStart + 1;
-			int n0 = 0, n11 = 0, n12 = 0;
-
-			while (rawBarcodeData[n++] == 1)
-				n11++;
-			while (rawBarcodeData[n++] == 0)
-				n0++;
-			while (rawBarcodeData[n++] == 1)
-				n12++;
-
-			if (n0 == n11 && n0 == n12)
-				noValidStartFound = false;
-			else
-				xStart++;
-		}
+		//
+		// Check for '101'
+		/*
+		 * int n = xStart + 1; int n0 = 0, n11 = 0, n12 = 0;
+		 * 
+		 * while (rawBarcodeData[n++] == 1) n11++; while (rawBarcodeData[n++] == 0)
+		 * n0++; while (rawBarcodeData[n++] == 1) n12++;
+		 * 
+		 * if (n0 == n11 && n0 == n12) noValidStartFound = false; else xStart++; }
+		 */
 
 		graphics.drawLine(xStart, 0, xStart, height);
 
@@ -161,7 +169,7 @@ public class Decode {
 		int minBarWidth = xEnd - xStart;
 		int moduleWidth = minBarWidth * ONE_MODULE_EQUALS_7_BARS;
 
-		protocol.append("Min- bar width for one digit=" + minBarWidth + " Module width=" + moduleWidth + " ["
+		protocol.append("Min- bar width for one module (digit)=" + minBarWidth + " Module width=" + moduleWidth + " ["
 				+ (System.currentTimeMillis() - startTime) + "ms]\n");
 
 		//
@@ -169,9 +177,11 @@ public class Decode {
 		//
 		// Ein ISBN 13 Barcode besteht aus 95 Modulen. Er:
 		//
-		// - beginnt mit 101 = 3 Module
+		// - beginnt mit 101 
 		// - Hat in der Mitte die markierung 01010 = 5 Module
-		// - Ended mit 101 = 3 Module.
+		// - Ended mit 101 
+		//
+		// ACHTUNG: DIE BREITE DER BALKEN FÜR 1 UND NULL KÖNNEN UNTERSCHIEDLICH SEIN....
 		//
 		// Dieses "Framework" lässt nun Platz für 84 Module. 42 in der linken/ 42 in der
 		// rechten
@@ -179,23 +189,51 @@ public class Decode {
 		//
 		// Wir markieren nun zunächst einmal die restlichen Bereiche des Barcodes...
 		//
-
 		protocol.append("Calculating width of barcode" + " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
-		
-		xEnd = xStart + minBarWidth * 95;
-		graphics.drawLine(xEnd, 0, xEnd, height);
 
-		int startOfFirstHalf = xStart + 3 * minBarWidth;
-		graphics.drawLine(startOfFirstHalf, 0, startOfFirstHalf, height);
+		xEnd = xStart + minBarWidth * NUM_OF_MODULES_OF_EAN;
+		if (xEnd >= width) {
+			protocol.append(">>>> CALCULATED END OF BARCODE IS OUTSIDE IMAGE BOUNDS....TRYING TO DECODE ANYWAY..."
+					+ " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
+			xEnd = width;
+		} else
+			graphics.drawLine(xEnd, 0, xEnd, height);
 
-		int endOfFirstHalf = startOfFirstHalf + 42 * minBarWidth;
-		graphics.drawLine(endOfFirstHalf, 0, endOfFirstHalf, height);
+		int startOfFirstHalf = xStart + NUM_OF_START_END_BARS * minBarWidth;
+		if (startOfFirstHalf >= width) {
+			protocol.append(
+					">>>> CALCULATED START OF FIRST HALF OF BARCODE IS OUTSIDE IMAGE BOUNDS....WONT BE ABLE TO DECODE"
+							+ " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
+			startOfFirstHalf = width;
+		} else
+			graphics.drawLine(startOfFirstHalf, 0, startOfFirstHalf, height);
 
-		int startOfSecondHalf = endOfFirstHalf + 5 * minBarWidth;
-		graphics.drawLine(startOfSecondHalf, 0, startOfSecondHalf, height);
+		int endOfFirstHalf = startOfFirstHalf + NUM_OF_DATA_MODULES * minBarWidth;
+		if (endOfFirstHalf >= width) {
+			protocol.append(
+					">>>> CALCULATED END OF FIRST HALF IS OUTSIDE IMAGE BOUNDS....TRYING TO DECODE ANYWAY...LETS SEE WHAT WE'VE GOT"
+							+ " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
+			endOfFirstHalf = width;
+		} else
+			graphics.drawLine(endOfFirstHalf, 0, endOfFirstHalf, height);
 
-		int endOfSecondHalf = startOfSecondHalf + 42 * minBarWidth;
-		graphics.drawLine(endOfSecondHalf, 0, endOfSecondHalf, height);
+		int startOfSecondHalf = endOfFirstHalf + NUM_OF_CENTER_BARS * minBarWidth;
+		if (startOfSecondHalf >= width) {
+			protocol.append(
+					">>>> CALCULATED START OF SECOND HALF IS OUTSIDE IMAGE BOUNDS....TRYING TO DECODE ANYWAY...LETS SEE WHAT WE'VE GOT"
+							+ " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
+			startOfSecondHalf = width;
+		} else
+			graphics.drawLine(startOfSecondHalf, 0, startOfSecondHalf, height);
+
+		int endOfSecondHalf = startOfSecondHalf + NUM_OF_DATA_MODULES * minBarWidth;
+		if (endOfSecondHalf >= width) {
+			protocol.append(
+					">>>> CALCULATED END OF SECOND HALF IS OUTSIDE IMAGE BOUNDS....TRYING TO DECODE ANYWAY...LETS SEE WHAT WE'VE GOT"
+							+ " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
+			endOfSecondHalf = width;
+		} else
+			graphics.drawLine(endOfSecondHalf, 0, endOfSecondHalf, height);
 
 		graphics.setColor(new Color(0, 255, 255));
 
@@ -204,10 +242,10 @@ public class Decode {
 
 		for (int x = startOfSecondHalf + moduleWidth; x < endOfSecondHalf; x = x + moduleWidth)
 			graphics.drawLine(x, 0, x, height);
-		
-		protocol.append("Calculated width of barcode is "+(xEnd-xStart) + " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
 
-		
+		protocol.append("Calculated width of barcode is " + (xEnd - xStart) + " ["
+				+ (System.currentTimeMillis() - startTime) + "ms]\n");
+
 		//
 		// Bevor das Decodieren beginnt, schauen wir ob die Grenzen des barcodes klar
 		// erkannt werden...
@@ -218,19 +256,19 @@ public class Decode {
 		int n = endOfSecondHalf + 1;
 		int n0 = 0, n11 = 0, n12 = 0;
 
-		while (rawBarcodeData[n++] == 1)
+		while (rawBarcodeData[n++] == 1 && n < width)
 			n11++;
-		while (rawBarcodeData[n++] == 0)
+		while (rawBarcodeData[n++] == 0 && n < width)
 			n0++;
-		while (rawBarcodeData[n++] == 1)
+		while (rawBarcodeData[n++] == 1 && n < width)
 			n12++;
 
 		if (n0 == n11 && n0 == n12)
 			protocol.append("possible horizontal end found at=" + endOfSecondHalf + " ["
 					+ (System.currentTimeMillis() - startTime) + "ms]\n");
 		else
-			protocol.append(">>>> COULD NOT FIND POSSIBLE END AT END CALCULATED " + endOfSecondHalf + "....TRYING TO DECODE ANYWAY..." + " ["
-					+ (System.currentTimeMillis() - startTime) + "ms]\n");
+			protocol.append(">>>> COULD NOT FIND POSSIBLE END AT END CALCULATED " + endOfSecondHalf
+					+ "....TRYING TO DECODE ANYWAY..." + " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
 
 		//
 		// Ergebnis speichern.
@@ -238,9 +276,9 @@ public class Decode {
 		File outputfile = new File(outputFile);
 		ImageIO.write(imageToDecode, "png", outputfile);
 
-		protocol.append(
-				"Output image written for evaluation by user:" + outputFile + " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
-		
+		protocol.append("Output image written for evaluation by user:" + outputFile + " ["
+				+ (System.currentTimeMillis() - startTime) + "ms]\n");
+
 		//
 		// Jede Ziffer wird mit 7 Modulen codiert...
 		// Aus den Rohdaten werden diese Module nun extraiert.
@@ -251,7 +289,7 @@ public class Decode {
 		int mod = ONE_MODULE_EQUALS_7_BARS;
 		int digit = 0;
 
-		// Erste Hälfte des Barcodes
+		// Erste Hälfte des Barcodes für ISBN, das heist, die erste Ziffer ist eine 9
 
 		int digitNr = 0;
 		for (int i = startOfFirstHalf + 1; i < endOfFirstHalf; i = i + minBarWidth) {
@@ -295,8 +333,20 @@ public class Decode {
 			}
 		}
 
-		protocol.append("Decoding ended." + " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
+		//
+		// Just for debuging, create a clean binary of the barcode...
+		//
+		protocol.append("\n\nBinary of barcode:\n");
 
+		for (int i = xStart; i < width; i++)
+			protocol.append(rawBarcodeData[i]);
+		protocol.append("\n\n");
+
+		
+		//
+		// Finish
+		//
+		protocol.append("Decoding ended." + " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
 		System.out.println(protocol.toString());
 
 		return "-";
