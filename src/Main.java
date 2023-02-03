@@ -14,7 +14,7 @@ public class Main {
 	 * @throws IOException
 	 */
 	public static void main(String arghs[]) throws IOException {
-		Decode.ean("perfect.png","debugImage.png", 89);
+		Decode.ean("perfect.png","debugImage.png",250);
 
 	}
 

@@ -10,9 +10,11 @@ import javax.imageio.ImageIO;
 
 public class Decode {
 
+	private static final int ONE_MODULE_EQUALS_7_BARS = 7;
+
 	public static String ean(String fileName, String outputFile, int barcodeVerticalpos) throws IOException {
-		
-		long startTime = System.currentTimeMillis();    
+
+		long startTime = System.currentTimeMillis();
 
 		StringBuilder protocol = new StringBuilder();
 
@@ -24,7 +26,8 @@ public class Decode {
 		int width = inputImage.getWidth();
 		int height = inputImage.getHeight();
 
-		protocol.append("Image read. Height=" + height + " Width=" + width + " ["+(System.currentTimeMillis()-startTime)+"ms]\n");
+		protocol.append("Image read. Height=" + height + " Width=" + width + " ["
+				+ (System.currentTimeMillis() - startTime) + "ms]\n");
 
 		float normSum = 0;
 
@@ -48,7 +51,8 @@ public class Decode {
 		// über alle Bildpunkte.....
 		//
 		float avgNormSum = normSum / (width * height);
-		protocol.append("Image was analyzed. Avarage luminance=" + avgNormSum +" ["+(System.currentTimeMillis()-startTime)+"ms]\n");
+		protocol.append("Image was analyzed. Avarage luminance=" + avgNormSum + " ["
+				+ (System.currentTimeMillis() - startTime) + "ms]\n");
 		protocol.append("Creating optimized image for decoding\n");
 
 		//
@@ -74,7 +78,13 @@ public class Decode {
 				}
 			}
 		}
-		protocol.append("Optimized image created"+ " ["+(System.currentTimeMillis()-startTime)+"ms]\n");
+		protocol.append("Optimized image created" + " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
+
+		//
+		// Vertikale pos. ab der der barcode gelesen wird markieren.....
+		//
+		graphics.setColor(new Color(0, 255, 0));// Zum markieren der Mitte, des Anfangs und des Endes des Codes...
+		graphics.drawLine(0, barcodeVerticalpos + 2, width, barcodeVerticalpos + 2);
 
 		//
 		// ISBN 13 => 13 Ziffern
@@ -84,42 +94,59 @@ public class Decode {
 		//
 		protocol.append("Reading barcode. y=" + barcodeVerticalpos + "\n");
 
-		graphics.setColor(new Color(0, 255, 0));// Zum markieren der Mitte, des Anfangs und des Endes des Codes...
-
-		int barcodeData[]; // Rohe Bilddaten binary.
-		barcodeData = new int[width];
+		int rawBarcodeData[]; // Rohe Bilddaten binary.
+		rawBarcodeData = new int[width];
 
 		//
 		// Eine Zeile des barcodes lesen
 		//
+		// Wir habenn nun die Rohdaten. das heist der beginn wäre nur dann als
+		// 101 erkennbarm, wenn die Breite eines Balkens genau ein Pixel betrüge....
+		//
+		//
 		for (int x = 0; x < width; x = x + 1) {
-			graphics.drawLine(0, barcodeVerticalpos + 2, width, barcodeVerticalpos + 2);
-			int p = imageToDecode.getRGB(x, barcodeVerticalpos);
-			if (p == 0) {
-				barcodeData[x] = 0;
+			int pixel = imageToDecode.getRGB(x, barcodeVerticalpos);
+			if (pixel == 0) {
+				rawBarcodeData[x] = 0;
 			} else {
-				barcodeData[x] = 1;
+				rawBarcodeData[x] = 1;
 			}
 		}
 
-		//
-		// Beginn des Barcodes in der Zeile suchen.
-		//
-		// Wir wissen, der Beginn wird durch 101 markiert.
-		//
-		protocol.append("Locating horizontal start of barcode\n");
-
 		int xStart = 0, xEnd = 0;
+		boolean noValidStartFound = true;
 
-			while (barcodeData[xStart] != 1)
-				if (xStart < width - 1)
-					xStart++;
-				else
-					break;
+		protocol.append("Searching for horizontal start of barcode"+ " ["
+				+ (System.currentTimeMillis() - startTime) + "ms]\n");
+
+		while (noValidStartFound && xStart <= width) {
+
+			while (rawBarcodeData[xStart] != 1)
+				xStart++;
+
+			//
+			// Check for '101'
+			//
+			int n = xStart + 1;
+			int n0 = 0, n11 = 0, n12 = 0;
+
+			while (rawBarcodeData[n++] == 1)
+				n11++;
+			while (rawBarcodeData[n++] == 0)
+				n0++;
+			while (rawBarcodeData[n++] == 1)
+				n12++;
+
+			if (n0 == n11 && n0 == n12)
+				noValidStartFound = false;
+			else
+				xStart++;
+		}
 
 		graphics.drawLine(xStart, 0, xStart, height);
 
-		protocol.append("Horizontal start found at x=" + xStart + " ["+(System.currentTimeMillis()-startTime)+"ms]\n");
+		protocol.append("possible horizontal start found at x=" + xStart + " ["
+				+ (System.currentTimeMillis() - startTime) + "ms]\n");
 
 		//
 		// Die Breite des ersten Balkens bestimmt die Midestbreite für eine 0
@@ -128,13 +155,14 @@ public class Decode {
 		protocol.append("Determining min- width of one digit of the barcode and the width of one module\n");
 
 		xEnd = xStart;
-		while (barcodeData[xEnd] != 0)
+		while (rawBarcodeData[xEnd] != 0)
 			xEnd++;
 
 		int minBarWidth = xEnd - xStart;
-		int moduleWidth = minBarWidth * 7;
+		int moduleWidth = minBarWidth * ONE_MODULE_EQUALS_7_BARS;
 
-		protocol.append("Min- bar width for one digit=" + minBarWidth + " Module width=" + moduleWidth + " ["+(System.currentTimeMillis()-startTime)+"ms]\n");
+		protocol.append("Min- bar width for one digit=" + minBarWidth + " Module width=" + moduleWidth + " ["
+				+ (System.currentTimeMillis() - startTime) + "ms]\n");
 
 		//
 		// Nun bestimmen wir das Ende der aktuellen Zeile des Barcodes in der Bilddatei.
@@ -151,15 +179,21 @@ public class Decode {
 		//
 		// Wir markieren nun zunächst einmal die restlichen Bereiche des Barcodes...
 		//
+
+		protocol.append("Calculating width of barcode" + " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
+		
 		xEnd = xStart + minBarWidth * 95;
 		graphics.drawLine(xEnd, 0, xEnd, height);
 
 		int startOfFirstHalf = xStart + 3 * minBarWidth;
 		graphics.drawLine(startOfFirstHalf, 0, startOfFirstHalf, height);
+
 		int endOfFirstHalf = startOfFirstHalf + 42 * minBarWidth;
 		graphics.drawLine(endOfFirstHalf, 0, endOfFirstHalf, height);
+
 		int startOfSecondHalf = endOfFirstHalf + 5 * minBarWidth;
 		graphics.drawLine(startOfSecondHalf, 0, startOfSecondHalf, height);
+
 		int endOfSecondHalf = startOfSecondHalf + 42 * minBarWidth;
 		graphics.drawLine(endOfSecondHalf, 0, endOfSecondHalf, height);
 
@@ -170,6 +204,33 @@ public class Decode {
 
 		for (int x = startOfSecondHalf + moduleWidth; x < endOfSecondHalf; x = x + moduleWidth)
 			graphics.drawLine(x, 0, x, height);
+		
+		protocol.append("Calculated width of barcode is "+(xEnd-xStart) + " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
+
+		
+		//
+		// Bevor das Decodieren beginnt, schauen wir ob die Grenzen des barcodes klar
+		// erkannt werden...
+		//
+		//
+		// Check for '101'end...
+		//
+		int n = endOfSecondHalf + 1;
+		int n0 = 0, n11 = 0, n12 = 0;
+
+		while (rawBarcodeData[n++] == 1)
+			n11++;
+		while (rawBarcodeData[n++] == 0)
+			n0++;
+		while (rawBarcodeData[n++] == 1)
+			n12++;
+
+		if (n0 == n11 && n0 == n12)
+			protocol.append("possible horizontal end found at=" + endOfSecondHalf + " ["
+					+ (System.currentTimeMillis() - startTime) + "ms]\n");
+		else
+			protocol.append(">>>> COULD NOT FIND POSSIBLE END AT END CALCULATED " + endOfSecondHalf + "....TRYING TO DECODE ANYWAY..." + " ["
+					+ (System.currentTimeMillis() - startTime) + "ms]\n");
 
 		//
 		// Ergebnis speichern.
@@ -177,8 +238,9 @@ public class Decode {
 		File outputfile = new File(outputFile);
 		ImageIO.write(imageToDecode, "png", outputfile);
 
-		protocol.append("Output image written:" + outputFile + " ["+(System.currentTimeMillis()-startTime)+"ms]\n");
-
+		protocol.append(
+				"Output image written for evaluation by user:" + outputFile + " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
+		
 		//
 		// Jede Ziffer wird mit 7 Modulen codiert...
 		// Aus den Rohdaten werden diese Module nun extraiert.
@@ -186,7 +248,7 @@ public class Decode {
 		protocol.append("Decoding starts......\n");
 
 		StringBuilder module = new StringBuilder();
-		int mod = 7;
+		int mod = ONE_MODULE_EQUALS_7_BARS;
 		int digit = 0;
 
 		// Erste Hälfte des Barcodes
@@ -194,8 +256,8 @@ public class Decode {
 		int digitNr = 0;
 		for (int i = startOfFirstHalf + 1; i < endOfFirstHalf; i = i + minBarWidth) {
 
-			module.append(barcodeData[i]);
-			
+			module.append(rawBarcodeData[i]);
+
 			mod--;
 			if (mod == 0) {
 				mod = 7;
@@ -219,12 +281,11 @@ public class Decode {
 		}
 
 		module.setLength(0);
-		mod = 7;
 		protocol.append("\n");
 
 		// Zweite Hälfte des Barcodes
 		for (int i = startOfSecondHalf; i < endOfSecondHalf; i = i + minBarWidth) {
-			module.append(barcodeData[i]);
+			module.append(rawBarcodeData[i]);
 			mod--;
 			if (mod == 0) {
 				mod = 7;
@@ -234,7 +295,7 @@ public class Decode {
 			}
 		}
 
-		protocol.append("Decoding ended."+ " ["+(System.currentTimeMillis()-startTime)+"ms]\n");
+		protocol.append("Decoding ended." + " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
 
 		System.out.println(protocol.toString());
 
