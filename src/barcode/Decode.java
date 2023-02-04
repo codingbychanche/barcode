@@ -129,32 +129,25 @@ public class Decode {
 			}
 		}
 
-		int xStart = 0, xEnd = 0;
-		boolean noValidStartFound = true;
-
+		//
+		// Start des Barcodes in der Zeile suchen....
+		//
 		protocol.append("Searching for horizontal start of barcode" + " [" + (System.currentTimeMillis() - startTime)
 				+ "ms]\n");
 
-		// while (noValidStartFound && xStart <= width) {
+		int xStart = 0, xEnd = 0;
 
 		while (rawBarcodeData[xStart] != 1)
 			xStart++;
 
-		//
-		// Check for '101'
-		/*
-		 * int n = xStart + 1; int n0 = 0, n11 = 0, n12 = 0;
-		 * 
-		 * while (rawBarcodeData[n++] == 1) n11++; while (rawBarcodeData[n++] == 0)
-		 * n0++; while (rawBarcodeData[n++] == 1) n12++;
-		 * 
-		 * if (n0 == n11 && n0 == n12) noValidStartFound = false; else xStart++; }
-		 */
+		if (CheckBoundary.startEnd(rawBarcodeData, xStart))
+			protocol.append("possible horizontal start 101 idendified at x=" + xStart + " ["
+					+ (System.currentTimeMillis() - startTime) + "ms]\n");
+		else
+			protocol.append(">>>> NO HORIZONTAL START 101 IDENDIFED... DECODING ANYWAY....["
+					+ (System.currentTimeMillis() - startTime) + "ms]\n");
 
 		graphics.drawLine(xStart, 0, xStart, height);
-
-		protocol.append("possible horizontal start found at x=" + xStart + " ["
-				+ (System.currentTimeMillis() - startTime) + "ms]\n");
 
 		//
 		// Die Breite des ersten Balkens bestimmt die Midestbreite für eine 0
@@ -166,7 +159,7 @@ public class Decode {
 		while (rawBarcodeData[xEnd] != 0)
 			xEnd++;
 
-		int minBarWidth = xEnd - xStart;
+		int minBarWidth = xEnd - xStart;// Was wenn 0 und eins nicht gleich breit sind?
 		int moduleWidth = minBarWidth * ONE_MODULE_EQUALS_7_BARS;
 
 		protocol.append("Min- bar width for one module (digit)=" + minBarWidth + " Module width=" + moduleWidth + " ["
@@ -177,9 +170,9 @@ public class Decode {
 		//
 		// Ein ISBN 13 Barcode besteht aus 95 Modulen. Er:
 		//
-		// - beginnt mit 101 
+		// - beginnt mit 101
 		// - Hat in der Mitte die markierung 01010 = 5 Module
-		// - Ended mit 101 
+		// - Ended mit 101
 		//
 		// ACHTUNG: DIE BREITE DER BALKEN FÜR 1 UND NULL KÖNNEN UNTERSCHIEDLICH SEIN....
 		//
@@ -250,21 +243,22 @@ public class Decode {
 		// Bevor das Decodieren beginnt, schauen wir ob die Grenzen des barcodes klar
 		// erkannt werden...
 		//
+		
+		// 
+		// Check for center
+		//
+		if (CheckBoundary.centerBar(rawBarcodeData, endOfFirstHalf))
+			protocol.append("Possible start for center bars 01010 idendified at=" + endOfFirstHalf + " ["
+					+ (System.currentTimeMillis() - startTime) + "ms]\n");
+		else
+			protocol.append(">>>> COULD NOT IDENDIFIY CENTER BARS AT " + endOfFirstHalf
+					+ "....TRYING TO DECODE ANYWAY..." + " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
+		
 		//
 		// Check for '101'end...
 		//
-		int n = endOfSecondHalf + 1;
-		int n0 = 0, n11 = 0, n12 = 0;
-
-		while (rawBarcodeData[n++] == 1 && n < width)
-			n11++;
-		while (rawBarcodeData[n++] == 0 && n < width)
-			n0++;
-		while (rawBarcodeData[n++] == 1 && n < width)
-			n12++;
-
-		if (n0 == n11 && n0 == n12)
-			protocol.append("possible horizontal end found at=" + endOfSecondHalf + " ["
+		if (CheckBoundary.startEnd(rawBarcodeData, endOfSecondHalf))
+			protocol.append("possible horizontal end 101 idendified at=" + endOfSecondHalf + " ["
 					+ (System.currentTimeMillis() - startTime) + "ms]\n");
 		else
 			protocol.append(">>>> COULD NOT FIND POSSIBLE END AT END CALCULATED " + endOfSecondHalf
@@ -289,16 +283,16 @@ public class Decode {
 		int mod = ONE_MODULE_EQUALS_7_BARS;
 		int digit = 0;
 
-		// Erste Hälfte des Barcodes für ISBN, das heist, die erste Ziffer ist eine 9
-
+		// Erste Hälfte des Barcodes 
+		
 		int digitNr = 0;
 		for (int i = startOfFirstHalf + 1; i < endOfFirstHalf; i = i + minBarWidth) {
 
 			module.append(rawBarcodeData[i]);
 
 			mod--;
-			if (mod == 0) {
-				mod = 7;
+			if (mod == 0 ) {
+				mod =  ONE_MODULE_EQUALS_7_BARS;
 				if (digitNr == 0)
 					digit = DigitCodes.getDigitFirstH("A", module.toString());
 				if (digitNr == 1)
@@ -342,7 +336,6 @@ public class Decode {
 			protocol.append(rawBarcodeData[i]);
 		protocol.append("\n\n");
 
-		
 		//
 		// Finish
 		//
