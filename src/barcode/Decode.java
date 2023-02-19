@@ -15,11 +15,14 @@ public class Decode {
 	//
 	// Consatnts reffering to an EAN/ ISBN 13 Code
 	//
-	private static final int ONE_MODULE_EQUALS_7_BARS = 7;
-	private static final int NUM_OF_MODULES_OF_EAN = 95;
-	private static final int NUM_OF_DATA_MODULES = 42;
-	private static final int NUM_OF_START_END_BARS = 3;
-	private static final int NUM_OF_CENTER_BARS = 5;
+	public static final int INDEX_OF_PREFIX=0; // EAN prefix. 9 for ISBN....
+	public static final int LENGTH_OF_EAN_13=13;
+	public static final int ONE_MODULE_EQUALS_7_BARS = 7;
+	public static final int NUM_OF_MODULES_OF_EAN = 95;
+	public static final int NUM_OF_DATA_MODULES = 42;
+	public static final int NUM_OF_START_END_BARS = 3;
+	public static final int NUM_OF_CENTER_BARS = 5;
+	public static final int INDEX_OF_CHECK_DIGIT=12;
 
 	/**
 	 * This decodes an EAN/ ISBN_ 13 Barcode...
@@ -31,7 +34,7 @@ public class Decode {
 	 * @throws IOException
 	 */
 
-	public static String ean(String fileName, String outputFile, int barcodeVerticalpos) throws IOException {
+	public static int [] ean(String fileName, String outputFile, int barcodeVerticalpos) throws IOException {
 
 		long startTime = System.currentTimeMillis();
 
@@ -128,6 +131,8 @@ public class Decode {
 				rawBarcodeData[x] = 1;
 			}
 		}
+		
+	
 
 		//
 		// Start des Barcodes in der Zeile suchen....
@@ -165,6 +170,7 @@ public class Decode {
 		protocol.append("Min- bar width for one module (digit)=" + minBarWidth + " Module width=" + moduleWidth + " ["
 				+ (System.currentTimeMillis() - startTime) + "ms]\n");
 
+		
 		//
 		// Nun bestimmen wir das Ende der aktuellen Zeile des Barcodes in der Bilddatei.
 		//
@@ -185,6 +191,9 @@ public class Decode {
 		protocol.append("Calculating width of barcode" + " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
 
 		xEnd = xStart + minBarWidth * NUM_OF_MODULES_OF_EAN;
+	
+		
+
 		if (xEnd >= width) {
 			protocol.append(">>>> CALCULATED END OF BARCODE IS OUTSIDE IMAGE BOUNDS....TRYING TO DECODE ANYWAY..."
 					+ " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
@@ -274,56 +283,73 @@ public class Decode {
 				+ (System.currentTimeMillis() - startTime) + "ms]\n");
 
 		//
+		// Decodierung des Barcodes....
+		//
 		// Jede Ziffer wird mit 7 Modulen codiert...
 		// Aus den Rohdaten werden diese Module nun extraiert.
 		//
 		protocol.append("Decoding starts......\n");
 
-		StringBuilder module = new StringBuilder();
+		int decodedDigits []=new int [LENGTH_OF_EAN_13];
+		StringBuilder modulesToDecode = new StringBuilder();
+		
 		int mod = ONE_MODULE_EQUALS_7_BARS;
 		int digit = 0;
 
 		// Erste Hälfte des Barcodes 
 		
+	
+		decodedDigits[INDEX_OF_PREFIX]=9; // We assume an ISBN code...
+		int digitIndex=1;
+		
 		int digitNr = 0;
 		for (int i = startOfFirstHalf + 1; i < endOfFirstHalf; i = i + minBarWidth) {
 
-			module.append(rawBarcodeData[i]);
+			modulesToDecode.append(rawBarcodeData[i]);
 
+			//
+			// Decode ISBN (Kennziffer=9)
+			//
+			// Die ersten Ziffern eines als ISBN kodierten Barcodes (erste Ziffer=9)
+			// sind im Schema ABBABA kodiert.
+			//
 			mod--;
 			if (mod == 0 ) {
 				mod =  ONE_MODULE_EQUALS_7_BARS;
 				if (digitNr == 0)
-					digit = DigitCodes.getDigitFirstH("A", module.toString());
+					digit = DigitCodes.getDigitFirstH("A", modulesToDecode.toString());
 				if (digitNr == 1)
-					digit = DigitCodes.getDigitFirstH("B", module.toString());
+					digit = DigitCodes.getDigitFirstH("B", modulesToDecode.toString());
 				if (digitNr == 2)
-					digit = DigitCodes.getDigitFirstH("B", module.toString());
+					digit = DigitCodes.getDigitFirstH("B", modulesToDecode.toString());
 				if (digitNr == 3)
-					digit = DigitCodes.getDigitFirstH("A", module.toString());
+					digit = DigitCodes.getDigitFirstH("A", modulesToDecode.toString());
 				if (digitNr == 4)
-					digit = DigitCodes.getDigitFirstH("B", module.toString());
+					digit = DigitCodes.getDigitFirstH("B", modulesToDecode.toString());
 				if (digitNr == 5)
-					digit = DigitCodes.getDigitFirstH("A", module.toString());
+					digit = DigitCodes.getDigitFirstH("A", modulesToDecode.toString());
 
 				digitNr++;
-				protocol.append(" -> " + module + "=" + digit + "\n");
-				module.setLength(0);
+				protocol.append(" -> " + modulesToDecode + "=" + digit + "\n");
+				decodedDigits[digitIndex++]=digit;
+				modulesToDecode.setLength(0);
 			}
 		}
 
-		module.setLength(0);
+		modulesToDecode.setLength(0);
 		protocol.append("\n");
 
 		// Zweite Hälfte des Barcodes
+		
 		for (int i = startOfSecondHalf; i < endOfSecondHalf; i = i + minBarWidth) {
-			module.append(rawBarcodeData[i]);
+			modulesToDecode.append(rawBarcodeData[i]);
 			mod--;
 			if (mod == 0) {
 				mod = 7;
-				digit = DigitCodes.getDigitSecondH(module.toString());
-				protocol.append(" -> " + module + "=" + digit + "\n");
-				module.setLength(0);
+				digit = DigitCodes.getDigitSecondH(modulesToDecode.toString());
+				protocol.append(" -> " + modulesToDecode + "=" + digit + "\n");
+				decodedDigits[digitIndex++]=digit;
+				modulesToDecode.setLength(0);
 			}
 		}
 
@@ -342,7 +368,7 @@ public class Decode {
 		protocol.append("Decoding ended." + " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
 		System.out.println(protocol.toString());
 
-		return "-";
+		return decodedDigits;
 	}
 
 	/**
