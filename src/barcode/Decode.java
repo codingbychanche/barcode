@@ -1,9 +1,8 @@
 package barcode;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Stroke;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -15,14 +14,14 @@ public class Decode {
 	//
 	// Consatnts reffering to an EAN/ ISBN 13 Code
 	//
-	public static final int INDEX_OF_PREFIX=0; // EAN prefix. 9 for ISBN....
-	public static final int LENGTH_OF_EAN_13=13;
+	public static final int INDEX_OF_PREFIX = 0; // EAN prefix. 9 for ISBN....
+	public static final int LENGTH_OF_EAN_13 = 13;
 	public static final int ONE_MODULE_EQUALS_7_BARS = 7;
 	public static final int NUM_OF_MODULES_OF_EAN = 95;
 	public static final int NUM_OF_DATA_MODULES = 42;
 	public static final int NUM_OF_START_END_BARS = 3;
 	public static final int NUM_OF_CENTER_BARS = 5;
-	public static final int INDEX_OF_CHECK_DIGIT=12;
+	public static final int INDEX_OF_CHECK_DIGIT = 12;
 
 	/**
 	 * This decodes an EAN/ ISBN_ 13 Barcode...
@@ -34,7 +33,7 @@ public class Decode {
 	 * @throws IOException
 	 */
 
-	public static int [] ean(String fileName, String outputFile, int barcodeVerticalpos) throws IOException {
+	public static int[] ean(String fileName, String outputFile, int barcodeVerticalpos) throws IOException {
 
 		long startTime = System.currentTimeMillis();
 
@@ -131,8 +130,6 @@ public class Decode {
 				rawBarcodeData[x] = 1;
 			}
 		}
-		
-	
 
 		//
 		// Start des Barcodes in der Zeile suchen....
@@ -142,10 +139,10 @@ public class Decode {
 
 		int xStart = 0, xEnd = 0;
 
-		while (rawBarcodeData[xStart] != 1)
+		while (rawBarcodeData[xStart] != 1 && xStart < width)
 			xStart++;
 
-		if (CheckBoundary.startEnd(rawBarcodeData, xStart))
+		if (CheckBoundary.startEndOfEAN(rawBarcodeData, xStart))
 			protocol.append("possible horizontal start 101 idendified at x=" + xStart + " ["
 					+ (System.currentTimeMillis() - startTime) + "ms]\n");
 		else
@@ -170,7 +167,6 @@ public class Decode {
 		protocol.append("Min- bar width for one module (digit)=" + minBarWidth + " Module width=" + moduleWidth + " ["
 				+ (System.currentTimeMillis() - startTime) + "ms]\n");
 
-		
 		//
 		// Nun bestimmen wir das Ende der aktuellen Zeile des Barcodes in der Bilddatei.
 		//
@@ -191,8 +187,6 @@ public class Decode {
 		protocol.append("Calculating width of barcode" + " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
 
 		xEnd = xStart + minBarWidth * NUM_OF_MODULES_OF_EAN;
-	
-		
 
 		if (xEnd >= width) {
 			protocol.append(">>>> CALCULATED END OF BARCODE IS OUTSIDE IMAGE BOUNDS....TRYING TO DECODE ANYWAY..."
@@ -252,21 +246,21 @@ public class Decode {
 		// Bevor das Decodieren beginnt, schauen wir ob die Grenzen des barcodes klar
 		// erkannt werden...
 		//
-		
-		// 
+
+		//
 		// Check for center
 		//
-		if (CheckBoundary.centerBar(rawBarcodeData, endOfFirstHalf))
+		if (CheckBoundary.centerBarOfEAN(rawBarcodeData, endOfFirstHalf))
 			protocol.append("Possible start for center bars 01010 idendified at=" + endOfFirstHalf + " ["
 					+ (System.currentTimeMillis() - startTime) + "ms]\n");
 		else
 			protocol.append(">>>> COULD NOT IDENDIFIY CENTER BARS AT " + endOfFirstHalf
 					+ "....TRYING TO DECODE ANYWAY..." + " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
-		
+
 		//
 		// Check for '101'end...
 		//
-		if (CheckBoundary.startEnd(rawBarcodeData, endOfSecondHalf))
+		if (CheckBoundary.startEndOfEAN(rawBarcodeData, endOfSecondHalf))
 			protocol.append("possible horizontal end 101 idendified at=" + endOfSecondHalf + " ["
 					+ (System.currentTimeMillis() - startTime) + "ms]\n");
 		else
@@ -290,19 +284,19 @@ public class Decode {
 		//
 		protocol.append("Decoding starts......\n");
 
-		int decodedDigits []=new int [LENGTH_OF_EAN_13];
+		int decodedDigits[] = new int[LENGTH_OF_EAN_13];
 		StringBuilder modulesToDecode = new StringBuilder();
-		
+
 		int mod = ONE_MODULE_EQUALS_7_BARS;
 		int digit = 0;
 
-		// Erste Hälfte des Barcodes 
-		
-	
-		decodedDigits[INDEX_OF_PREFIX]=9; // We assume an ISBN code...
-		int digitIndex=1;
-		
+		// Erste Hälfte des Barcodes
+
+		decodedDigits[INDEX_OF_PREFIX] = 9; // We assume an ISBN code...
+		int digitIndex = 1;
+
 		int digitNr = 0;
+
 		for (int i = startOfFirstHalf + 1; i < endOfFirstHalf; i = i + minBarWidth) {
 
 			modulesToDecode.append(rawBarcodeData[i]);
@@ -314,8 +308,8 @@ public class Decode {
 			// sind im Schema ABBABA kodiert.
 			//
 			mod--;
-			if (mod == 0 ) {
-				mod =  ONE_MODULE_EQUALS_7_BARS;
+			if (mod == 0) {
+				mod = ONE_MODULE_EQUALS_7_BARS;
 				if (digitNr == 0)
 					digit = DigitCodes.getDigitFirstH("A", modulesToDecode.toString());
 				if (digitNr == 1)
@@ -331,7 +325,7 @@ public class Decode {
 
 				digitNr++;
 				protocol.append(" -> " + modulesToDecode + "=" + digit + "\n");
-				decodedDigits[digitIndex++]=digit;
+				decodedDigits[digitIndex++] = digit;
 				modulesToDecode.setLength(0);
 			}
 		}
@@ -340,7 +334,7 @@ public class Decode {
 		protocol.append("\n");
 
 		// Zweite Hälfte des Barcodes
-		
+
 		for (int i = startOfSecondHalf; i < endOfSecondHalf; i = i + minBarWidth) {
 			modulesToDecode.append(rawBarcodeData[i]);
 			mod--;
@@ -348,7 +342,7 @@ public class Decode {
 				mod = 7;
 				digit = DigitCodes.getDigitSecondH(modulesToDecode.toString());
 				protocol.append(" -> " + modulesToDecode + "=" + digit + "\n");
-				decodedDigits[digitIndex++]=digit;
+				decodedDigits[digitIndex++] = digit;
 				modulesToDecode.setLength(0);
 			}
 		}
@@ -358,8 +352,15 @@ public class Decode {
 		//
 		protocol.append("\n\nBinary of barcode:\n");
 
-		for (int i = xStart; i < width; i++)
+		int w = 0;
+		for (int i = xStart; i < width; i++) {
 			protocol.append(rawBarcodeData[i]);
+			w++;
+			if (w == minBarWidth) {
+				protocol.append(" ");
+				w = 0;
+			}
+		}
 		protocol.append("\n\n");
 
 		//
