@@ -27,9 +27,8 @@ public class Main {
 		
 		// Encoding demo
 		
-		//String code=Encode.doEncoding("988009912345");
-		String code=Encode.doEncoding("900000000000");
-		
+		String code=Encode.doEncoding("978888963715");
+	
 		BarcodeRenderer.draw(code);
 
 	}

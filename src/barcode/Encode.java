@@ -66,7 +66,7 @@ public class Encode {
 		// the known encoding sceme.
 		//
 		int i = 1;
-		for (i = 1; i < LENGTH_OF_FIRST_HALF; i++) {
+		for (i = 1; i <= LENGTH_OF_FIRST_HALF; i++) {
 			String s = scemeSequence.substring(i, i + 1);
 			int digit = Integer.valueOf(code.substring(i, i + 1));
 			String b = DigitCodes.getBinaryFirstH(digit, s);
@@ -85,7 +85,7 @@ public class Encode {
 		//
 		for (; i < LENGTH_OF_SECOND_HALF + 6; i++) {
 			int digit = Integer.valueOf(code.substring(i, i + 1));
-			String b = DigitCodes.getBinaryFirstH(digit, "A");
+			String b = DigitCodes.getBinarySecondH(digit);
 			binary.append(b);
 			protocol.append(digit + "=" + b + "\n");
 		}

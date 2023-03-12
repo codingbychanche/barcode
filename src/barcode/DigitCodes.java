@@ -92,7 +92,7 @@ public class DigitCodes {
 				return 2;
 			if (d.equals("0111101"))
 				return 3;
-			if (d.equals("1011100"))
+			if (d.equals("0100011"))
 				return 4;
 			if (d.equals("0110001"))
 				return 5;
@@ -115,7 +115,7 @@ public class DigitCodes {
 				return 2;
 			if (d.equals("0100001"))
 				return 3;
-			if (d.equals("10011101"))
+			if (d.equals("0011101"))
 				return 4;
 			if (d.equals("0111001"))
 				return 5;
@@ -152,7 +152,7 @@ public class DigitCodes {
 			if (digit == 3)
 				return "0111101";
 			if (digit == 4)
-				return "1011100";
+				return "0100011";
 			if (digit == 5)
 				return "0110001";
 			if (digit == 6)
@@ -175,7 +175,7 @@ public class DigitCodes {
 			if (digit == 3)
 				return "0100001";
 			if (digit == 4)
-				return "10011101";
+				return "0011101";
 			if (digit == 5)
 				return "0111001";
 			if (digit == 6)

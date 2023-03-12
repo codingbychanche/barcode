@@ -10,18 +10,23 @@ import javax.imageio.ImageIO;
 
 public class BarcodeRenderer {
 	
-private static final int WIDTH=1500;
-private static final int HEIGHT=100;
+private static final int BAR_WIDTH=3;
+private static final int WIDTH=BAR_WIDTH*150;
+private static final int HEIGHT=WIDTH/3;
 
 	public static void draw (String barcodeBinary) {
 		BufferedImage barcode = new BufferedImage(WIDTH,HEIGHT, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D b = barcode.createGraphics();
 
-		Color color = new Color(0, 0, 0);
+		Color color = new Color(255,255,255);
+		b.setColor(color);
+		b.fillRect (0, 0, WIDTH, HEIGHT);
+		
+		color = new Color(0,0,0);
 		b.setColor(color);
 		
 		int x=20;
-		int barWidth=8;
+		int barWidth=BAR_WIDTH;
 		for (int i=0;i<barcodeBinary.length();i++) {
 			String digit=barcodeBinary.substring(i,i+1);
 			System.out.print(digit);
