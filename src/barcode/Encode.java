@@ -119,7 +119,7 @@ public class Encode {
 		// 
 		// Generate final result and return home...
 		//
-		Result r = new Result(binary.toString(), code,protocol.toString(), NO_ERROR);
+		Result r = new Result(binary.toString(), code+checksum,protocol.toString(), NO_ERROR);
 		return r;
 	}
 }

@@ -28,7 +28,7 @@ public class Main {
 		
 		// Encoding demo
 		
-		Result code=Encode.doEncoding("971234963719");
+		Result code=Encode.doEncoding("971234963710");
 	
 		BarcodeRenderer.draw(code);
 		
