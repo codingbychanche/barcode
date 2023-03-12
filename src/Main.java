@@ -4,6 +4,7 @@ import barcode.Decode;
 import barcode.Checksum;
 import barcode.Encode;
 import barcode.BarcodeRenderer;
+import barcode.Result;
 
 public class Main {
 
@@ -27,9 +28,11 @@ public class Main {
 		
 		// Encoding demo
 		
-		String code=Encode.doEncoding("978888963715");
+		Result code=Encode.doEncoding("971234963719");
 	
 		BarcodeRenderer.draw(code);
+		
+		System.out.println(code.getProtocol());
 
 	}
 

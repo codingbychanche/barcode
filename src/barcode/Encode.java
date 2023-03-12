@@ -4,9 +4,9 @@ package barcode;
  * Collection of methods to generate the binary representations of various ean
  * barcodes.
  * 
- * TODO: MOE CONSTANTS TO A SEPERATE FILE. ADD A CLASS REPRESENTING THE RESULT WHICH
- * CONTAINS THE RAW BINARY OF THE VARIOUS CODES AND THE PROTOCOL GENERATED TO PROVIDE
- * BOTH, A MACHINE AND A HUMAN READABLE FORM..... 
+ * TODO: MOE CONSTANTS TO A SEPERATE FILE. ADD A CLASS REPRESENTING THE RESULT
+ * WHICH CONTAINS THE RAW BINARY OF THE VARIOUS CODES AND THE PROTOCOL GENERATED
+ * TO PROVIDE BOTH, A MACHINE AND A HUMAN READABLE FORM.....
  * 
  * @author Berthold
  *
@@ -19,7 +19,8 @@ public class Encode {
 	public static final int ISBN = 9;
 	public static final String SCEME_SEQUENCE_ISBN = "XABBABA"; // First X=> no sceme necessary....
 
-	public static final String INVALID_SEQUENCE = "xxxxxx";
+	public static final boolean ERROR = true;
+	public static final boolean NO_ERROR = false;
 
 	/**
 	 * Encodes an arbitrary sequence of integers into a valid 13- digit ean code.
@@ -30,31 +31,37 @@ public class Encode {
 	 * @param code A valid string containing a valid sequence of 12 integers to be
 	 *             encoded into an ean code.
 	 * 
-	 * @return A string containing the binary representation of the encoded ean
-	 *         code.
+	 * @return A object of the type {@Link Result}.
 	 */
-	public static String doEncoding(String code) {
+	public static Result doEncoding(String code) {
 		StringBuilder binary = new StringBuilder(); // Raw binary of the code.
 		StringBuilder protocol = new StringBuilder(); // Human readable form of the encoded code.
 
 		String scemeSequence;
 
 		//
-		// First digit is for the encoding sceme
+		// Check parameters.
+		//
+		if (code.length() < 12) {
+			protocol.append("Invalid number of digits for type of barcode given. Aborded!\n");
+			Result r = new Result("", code,protocol.toString(), ERROR);
+			return r;
+		}
+
+		//
+		// Check for type of code and set encoding scheme accordingly..
 		//
 		int firstDigit = Integer.valueOf(code.substring(0, 1));
-
-		if (code.length() < 12)
-			return INVALID_SEQUENCE;
-
+		
 		if (firstDigit == ISBN) {
 			scemeSequence = SCEME_SEQUENCE_ISBN;
 			protocol.append("Generating ISBN...\n\n");
 		} else {
 			protocol.append("No valid encoding sceme for an ean passed. Aborded.\n");
-			return INVALID_SEQUENCE;
+			Result r = new Result("", code,protocol.toString(), ERROR);
+			return r;
 		}
-
+			
 		//
 		// Set left boundary.
 		//
@@ -109,8 +116,10 @@ public class Encode {
 
 		protocol.append("Binary:\n" + binary);
 
-		System.out.println(protocol);
-
-		return binary.toString();
+		// 
+		// Generate final result and return home...
+		//
+		Result r = new Result(binary.toString(), code,protocol.toString(), NO_ERROR);
+		return r;
 	}
 }
