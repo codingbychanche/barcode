@@ -16,12 +16,6 @@ public class Encode {
 	public static final int LENGTH_OF_FIRST_HALF = 6;
 	public static final int LENGTH_OF_SECOND_HALF = 6;
 
-	public static final int ISBN = 9;
-	public static final String SCEME_SEQUENCE_ISBN = "XABBABA"; // First X=> no sceme necessary....
-
-	public static final boolean ERROR = true;
-	public static final boolean NO_ERROR = false;
-
 	/**
 	 * Encodes an arbitrary sequence of integers into a valid 13- digit ean code.
 	 * First integer must be a valid integer for the kind of ean code to be
@@ -44,7 +38,7 @@ public class Encode {
 		//
 		if (code.length() < 12) {
 			protocol.append("Invalid number of digits for type of barcode given. Aborded!\n");
-			Result r = new Result("", code,protocol.toString(), ERROR);
+			Result r = new Result("", code,protocol.toString(), Barcode.ERROR);
 			return r;
 		}
 
@@ -53,12 +47,12 @@ public class Encode {
 		//
 		int firstDigit = Integer.valueOf(code.substring(0, 1));
 		
-		if (firstDigit == ISBN) {
-			scemeSequence = SCEME_SEQUENCE_ISBN;
+		if (firstDigit == Barcode.ISBN) {
+			scemeSequence = Barcode.SCEME_SEQUENCE_ISBN;
 			protocol.append("Generating ISBN...\n\n");
 		} else {
 			protocol.append("No valid encoding sceme for an ean passed. Aborded.\n");
-			Result r = new Result("", code,protocol.toString(), ERROR);
+			Result r = new Result("", code,protocol.toString(), Barcode.ERROR);
 			return r;
 		}
 			
@@ -119,7 +113,7 @@ public class Encode {
 		// 
 		// Generate final result and return home...
 		//
-		Result r = new Result(binary.toString(), code+checksum,protocol.toString(), NO_ERROR);
+		Result r = new Result(binary.toString(), code+checksum,protocol.toString(), Barcode.NO_ERROR);
 		return r;
 	}
 }

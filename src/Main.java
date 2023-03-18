@@ -5,16 +5,17 @@ import barcode.Checksum;
 import barcode.Encode;
 import barcode.BarcodeRenderer;
 import barcode.Result;
+import barcode.Barcode;
 
 public class Main {
 
 	public static void main(String arghs[]) throws IOException {
 
 		// Decoding demo.
-		int[] decodedDigits = new int[Decode.LENGTH_OF_EAN_13];
+		int[] decodedDigits = new int[Barcode.LENGTH_OF_EAN_13];
 
 		//for (int i = 80; i <= 90; i++) {
-			decodedDigits = Decode.ean("generated_barcode.png", "debugImage.png", 50);
+			decodedDigits = Decode.ean("bar13.png", "debugImage.png", 150);
 
 			//if (GetChecksumFor.isbn(decodedDigits))
 			//	break;

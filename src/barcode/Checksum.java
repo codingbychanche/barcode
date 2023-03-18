@@ -17,7 +17,7 @@ public class Checksum {
 	 */
 	public static boolean checkForIsbn(int[] digits) {
 
-		if (getForIsbn(digits) == digits[Decode.INDEX_OF_CHECK_DIGIT])
+		if (getForIsbn(digits) == digits[Barcode.INDEX_OF_CHECK_DIGIT])
 			return true;
 		else
 			return false;

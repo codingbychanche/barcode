@@ -15,13 +15,7 @@ public class Decode {
 	// Consatnts reffering to an EAN/ ISBN 13 Code
 	//
 	public static final int INDEX_OF_PREFIX = 0; // EAN prefix. 9 for ISBN....
-	public static final int LENGTH_OF_EAN_13 = 13;
-	public static final int ONE_MODULE_EQUALS_7_BARS = 7;
-	public static final int NUM_OF_MODULES_OF_EAN = 95;
-	public static final int NUM_OF_DATA_MODULES = 42;
-	public static final int NUM_OF_START_END_BARS = 3;
-	public static final int NUM_OF_CENTER_BARS = 5;
-	public static final int INDEX_OF_CHECK_DIGIT = 12;
+	
 
 	/**
 	 * This decodes an EAN/ ISBN_ 13 Barcode...
@@ -64,6 +58,8 @@ public class Decode {
 				normSum = normSum + norm;
 			}
 		}
+		
+		normSum=normSum/1.0f; // Je größer, desto weniger "Abfall"
 
 		//
 		// der Durchschnitt aller Standartabweichungen
@@ -162,7 +158,7 @@ public class Decode {
 			xEnd++;
 
 		int minBarWidth = xEnd - xStart;// Was wenn 0 und eins nicht gleich breit sind?
-		int moduleWidth = minBarWidth * ONE_MODULE_EQUALS_7_BARS;
+		int moduleWidth = minBarWidth * Barcode.ONE_MODULE_EQUALS_7_BARS;
 
 		protocol.append("Min- bar width for one module (digit)=" + minBarWidth + " Module width=" + moduleWidth + " ["
 				+ (System.currentTimeMillis() - startTime) + "ms]\n");
@@ -186,7 +182,7 @@ public class Decode {
 		//
 		protocol.append("Calculating width of barcode" + " [" + (System.currentTimeMillis() - startTime) + "ms]\n");
 
-		xEnd = xStart + minBarWidth * NUM_OF_MODULES_OF_EAN;
+		xEnd = xStart + minBarWidth * Barcode.NUM_OF_MODULES_OF_EAN;
 
 		if (xEnd >= width) {
 			protocol.append(">>>> CALCULATED END OF BARCODE IS OUTSIDE IMAGE BOUNDS....TRYING TO DECODE ANYWAY..."
@@ -195,7 +191,7 @@ public class Decode {
 		} else
 			graphics.drawLine(xEnd, 0, xEnd, height);
 
-		int startOfFirstHalf = xStart + NUM_OF_START_END_BARS * minBarWidth;
+		int startOfFirstHalf = xStart + Barcode.NUM_OF_START_END_BARS * minBarWidth;
 		if (startOfFirstHalf >= width) {
 			protocol.append(
 					">>>> CALCULATED START OF FIRST HALF OF BARCODE IS OUTSIDE IMAGE BOUNDS....WONT BE ABLE TO DECODE"
@@ -204,7 +200,7 @@ public class Decode {
 		} else
 			graphics.drawLine(startOfFirstHalf, 0, startOfFirstHalf, height);
 
-		int endOfFirstHalf = startOfFirstHalf + NUM_OF_DATA_MODULES * minBarWidth;
+		int endOfFirstHalf = startOfFirstHalf + Barcode.NUM_OF_DATA_MODULES * minBarWidth;
 		if (endOfFirstHalf >= width) {
 			protocol.append(
 					">>>> CALCULATED END OF FIRST HALF IS OUTSIDE IMAGE BOUNDS....TRYING TO DECODE ANYWAY...LETS SEE WHAT WE'VE GOT"
@@ -213,7 +209,7 @@ public class Decode {
 		} else
 			graphics.drawLine(endOfFirstHalf, 0, endOfFirstHalf, height);
 
-		int startOfSecondHalf = endOfFirstHalf + NUM_OF_CENTER_BARS * minBarWidth;
+		int startOfSecondHalf = endOfFirstHalf + Barcode.NUM_OF_CENTER_BARS * minBarWidth;
 		if (startOfSecondHalf >= width) {
 			protocol.append(
 					">>>> CALCULATED START OF SECOND HALF IS OUTSIDE IMAGE BOUNDS....TRYING TO DECODE ANYWAY...LETS SEE WHAT WE'VE GOT"
@@ -222,7 +218,7 @@ public class Decode {
 		} else
 			graphics.drawLine(startOfSecondHalf, 0, startOfSecondHalf, height);
 
-		int endOfSecondHalf = startOfSecondHalf + NUM_OF_DATA_MODULES * minBarWidth;
+		int endOfSecondHalf = startOfSecondHalf + Barcode.NUM_OF_DATA_MODULES * minBarWidth;
 		if (endOfSecondHalf >= width) {
 			protocol.append(
 					">>>> CALCULATED END OF SECOND HALF IS OUTSIDE IMAGE BOUNDS....TRYING TO DECODE ANYWAY...LETS SEE WHAT WE'VE GOT"
@@ -284,10 +280,10 @@ public class Decode {
 		//
 		protocol.append("Decoding starts......\n");
 
-		int decodedDigits[] = new int[LENGTH_OF_EAN_13];
+		int decodedDigits[] = new int[Barcode.LENGTH_OF_EAN_13];
 		StringBuilder modulesToDecode = new StringBuilder();
 
-		int mod = ONE_MODULE_EQUALS_7_BARS;
+		int mod = Barcode.ONE_MODULE_EQUALS_7_BARS;
 		int digit = 0;
 
 		// Erste Hälfte des Barcodes
@@ -309,7 +305,7 @@ public class Decode {
 			//
 			mod--;
 			if (mod == 0) {
-				mod = ONE_MODULE_EQUALS_7_BARS;
+				mod = Barcode.ONE_MODULE_EQUALS_7_BARS;
 				if (digitNr == 0)
 					digit = DigitCodes.getDigitFirstH("A", modulesToDecode.toString());
 				if (digitNr == 1)
