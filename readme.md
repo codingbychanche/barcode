@@ -5,4 +5,4 @@ Experimantal, but, basically works for EAN- Codes of the type ISBN. Still needs 
 
 ![A generated barcode](generated_barcode.png)
 
-![A decoded barcode, showing some debug information. All seems to be ok!](debuggedImage.png)
+![A decoded barcode, showing some debug information. All seems to be ok!](debugImage.png)
