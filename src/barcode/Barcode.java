@@ -13,6 +13,7 @@ public class Barcode {
 	
 	public static final int ISBN = 9;
 	public static final String SCEME_SEQUENCE_ISBN = "XABBABA"; // First X=> no sceme necessary....
+	public static final String SCEME_SEQUENCE_TEST="XBBAABB";
 	
 	public static final int LENGTH_OF_EAN_13 = 13;
 	public static final int ONE_MODULE_EQUALS_7_BARS = 7;

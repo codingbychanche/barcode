@@ -18,16 +18,16 @@ public class Decode {
 	
 
 	/**
-	 * This decodes an EAN/ ISBN_ 13 Barcode...
-	 * 
-	 * @param fileName
-	 * @param outputFile
-	 * @param barcodeVerticalpos
-	 * @return
+	 * Decodes an 13 Digit barcode, according to the given decoding sceme.
+	 *  
+	 * @param fileName Image of the barcode to be decoded.
+	 * @param outputFile The file to which an imiga containing debbung information is written.
+	 * @param scemeSequence One of the supported decoding scemes. See:{@link Barcode.java}
+	 * @param barcodeVerticalpos Vertical start of barcode.
 	 * @throws IOException
 	 */
 
-	public static int[] ean(String fileName, String outputFile, int barcodeVerticalpos) throws IOException {
+	public static int[] ean(String fileName, String outputFile, String scemeSequence,int barcodeVerticalpos) throws IOException {
 
 		long startTime = System.currentTimeMillis();
 
@@ -307,17 +307,17 @@ public class Decode {
 			if (mod == 0) {
 				mod = Barcode.ONE_MODULE_EQUALS_7_BARS;
 				if (digitNr == 0)
-					digit = DigitCodes.getDigitFirstH("A", modulesToDecode.toString());
+					digit = DigitCodes.getDigitFirstH(scemeSequence.substring(1,2), modulesToDecode.toString());
 				if (digitNr == 1)
-					digit = DigitCodes.getDigitFirstH("B", modulesToDecode.toString());
+					digit = DigitCodes.getDigitFirstH(scemeSequence.substring(2, 3), modulesToDecode.toString());
 				if (digitNr == 2)
-					digit = DigitCodes.getDigitFirstH("B", modulesToDecode.toString());
+					digit = DigitCodes.getDigitFirstH(scemeSequence.substring(3, 4), modulesToDecode.toString());
 				if (digitNr == 3)
-					digit = DigitCodes.getDigitFirstH("A", modulesToDecode.toString());
+					digit = DigitCodes.getDigitFirstH(scemeSequence.substring(4, 5), modulesToDecode.toString());
 				if (digitNr == 4)
-					digit = DigitCodes.getDigitFirstH("B", modulesToDecode.toString());
+					digit = DigitCodes.getDigitFirstH(scemeSequence.substring(5, 6), modulesToDecode.toString());
 				if (digitNr == 5)
-					digit = DigitCodes.getDigitFirstH("A", modulesToDecode.toString());
+					digit = DigitCodes.getDigitFirstH(scemeSequence.substring(6, 7), modulesToDecode.toString());
 
 				digitNr++;
 				protocol.append(" -> " + modulesToDecode + "=" + digit + "\n");

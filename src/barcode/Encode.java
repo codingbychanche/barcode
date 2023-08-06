@@ -25,13 +25,13 @@ public class Encode {
 	 * @param code A valid string containing a valid sequence of 12 integers to be
 	 *             encoded into an ean code.
 	 * 
-	 * @return A object of the type {@Link Result}.
+	 * @param scemeSequence The encoding sequence => see {@link Barcode.java}
+	 * 
+	 * @return A object of the type {@link Result}.
 	 */
-	public static Result doEncoding(String code) {
+	public static Result doEncoding(String code, String scemeSequence) {
 		StringBuilder binary = new StringBuilder(); // Raw binary of the code.
 		StringBuilder protocol = new StringBuilder(); // Human readable form of the encoded code.
-
-		String scemeSequence;
 
 		//
 		// Check parameters.
@@ -47,11 +47,10 @@ public class Encode {
 		//
 		int firstDigit = Integer.valueOf(code.substring(0, 1));
 		
-		if (firstDigit == Barcode.ISBN) {
-			scemeSequence = Barcode.SCEME_SEQUENCE_ISBN;
+		if (firstDigit == Barcode.ISBN && scemeSequence==Barcode.SCEME_SEQUENCE_ISBN) {
 			protocol.append("Generating ISBN...\n\n");
 		} else {
-			protocol.append("No valid encoding sceme for an ean passed. Aborded.\n");
+			protocol.append("No valid encoding sceme and/ or valid first digit for an ean passed. Aborded.\n");
 			Result r = new Result("", code,protocol.toString(), Barcode.ERROR);
 			return r;
 		}

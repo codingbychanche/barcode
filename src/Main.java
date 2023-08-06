@@ -15,7 +15,7 @@ public class Main {
 		int[] decodedDigits = new int[Barcode.LENGTH_OF_EAN_13];
 
 		//for (int i = 80; i <= 90; i++) {
-			decodedDigits = Decode.ean("bar13.png", "debugImage.png", 150);
+			decodedDigits = Decode.ean("generated_barcode.png", "debugImage.png", Barcode.SCEME_SEQUENCE_TEST,15);
 
 			//if (GetChecksumFor.isbn(decodedDigits))
 			//	break;
@@ -29,7 +29,7 @@ public class Main {
 		
 		// Encoding demo
 		
-		Result code=Encode.doEncoding("971234963710");
+		Result code=Encode.doEncoding("982123432123",Barcode.SCEME_SEQUENCE_TEST);
 	
 		BarcodeRenderer.draw(code);
 		
